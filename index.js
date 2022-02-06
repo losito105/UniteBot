@@ -1,6 +1,21 @@
+// imports
+const {
+  Client,
+  Intents,
+  MessageActionRow,
+  MessageSelectMenu,
+  Message,
+  MessageAttachment,
+} = require("discord.js");
+
+const { con } = require('./database');
+const https = require('https');
+
+// bot info
 // TODO: move to .env
 const botToken = "OTE0NTc4MzIxOTgxOTY0Mzgw.YaPFcA.rkUE1bS6NEQ8vQ7pGFQg5s8fuIo";
 const clientID = "914578321981964380";
+const generalChannelID = "913977196153016391/913977196153016394";
 
 // /pregame vars
 var slashCommandUser = "";
@@ -18,20 +33,7 @@ function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-const {
-  UniteDatabase,
-  statsCollection,
-  addEntry,
-  calculateStats,
-} = require("./database");
-
-const {
-  Client,
-  Intents,
-  MessageActionRow,
-  MessageSelectMenu,
-} = require("discord.js");
-
+// create client
 const client = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
 });
@@ -43,80 +45,82 @@ client.on("ready", () => {
 
 client.on("interactionCreate", async (interaction) => {
   slashCommandUser = interaction.user.username;
+
   if (interaction.isCommand()) {
     const { commandName } = interaction;
-    if (commandName === "stats") {
-      var leaderboardData = await calculateStats(
-        UniteDatabase,
-        statsCollection,
-      );
-      var highestAvgPts = [0, ""];
-      var highestAvgKills = [0, ""];
-      var highestAvgAssists = [0, ""];
-      var highestAvgRating = [0, ""];
 
-      for (var i = 0; i < leaderboardData.length; i++) {
-        var player = leaderboardData[i].player;
+    /* /melody logic */
+    if (commandName === "melody") {
+      const scribble = require('scribbletune');
+      // TODO: generate melodies
+    }
 
-        if (leaderboardData[i].averagePointsScored > highestAvgPts[0]) {
-          highestAvgPts[0] = leaderboardData[i].averagePointsScored;
-          highestAvgPts[1] = player;
-        }
 
-        if (leaderboardData[i].averageKills > highestAvgKills[0]) {
-          highestAvgKills[0] = leaderboardData[i].averageKills;
-          highestAvgKills[1] = player;
-        }
+    /* /shiny logic */
+    else if (commandName === "shiny") {
+      // get photos from pokeapi
+      const axios = require('axios');
 
-        if (leaderboardData[i].averageAssists > highestAvgAssists[0]) {
-          highestAvgAssists[0] = leaderboardData[i].averageAssists;
-          highestAvgAssists[1] = player;
-        }
+      axios.get(`https://pokeapi.co/api/v2/pokemon/${interaction.options.getString("pokémon").toLowerCase()}`)
+        .then(response => {
+          const shinyUrl = response?.data.sprites?.front_shiny;
 
-        if (leaderboardData[i].averageRating > highestAvgRating[0]) {
-          highestAvgRating[0] = leaderboardData[i].averageRating;
-          highestAvgRating[1] = player;
-        }
-      }
-      var leaderboard = `------------------------------------------------------\n`;
-      leaderboard += `HIGHEST AVERAGE PPG :: ${highestAvgPts[0]} (${highestAvgPts[1]})\n`;
-      leaderboard += `------------------------------------------------------\n`;
+          const shinyImg = new MessageAttachment(shinyUrl);
+          
+          interaction.reply({files: [shinyImg], ephemeral: true});
+        })
+        .catch(error => {
+          console.log(error);
+          interaction.reply(`${interaction.options.getString("pokémon")} is not a Pokémon...`);
+        });
+    }
 
-      leaderboard += `HIGHEST AVERAGE KPG :: ${highestAvgKills[0]} (${highestAvgKills[1]})\n`;
-      leaderboard += `------------------------------------------------------\n`;
-
-      leaderboard += `HIGHEST AVERAGE APG :: ${highestAvgAssists[0]} (${highestAvgAssists[1]})\n`;
-      leaderboard += `------------------------------------------------------\n`;
-
-      leaderboard += `HIGHEST AVERAGE RATING :: ${highestAvgRating[0]} (${highestAvgRating[1]})\n`;
-      leaderboard += `------------------------------------------------------\n`;
-
-      await interaction.reply({
-        content: leaderboard,
-        ephemeral: false,
+    /* /stats logic */
+    else if (commandName === "stats") {
+      var sql_use = 'USE unite';
+      con.query(sql_use, function (err, result) {
+        if (err) throw err;
+        console.log("using unite db");
       });
-    } else if (commandName === "postgame") {
+
+      var sql_averages_query = `SELECT AVG(points) AS p, AVG(kills) AS k, AVG(assists) AS a, AVG(rating) AS r FROM stats WHERE id = '${interaction.options.getString("username")}'`;
+      con.query(sql_averages_query, function (err, result) {
+        if (err) throw err;
+        console.log("successfully calculated averages");
+        interaction.reply({
+          content: `${interaction.options.getString("username")}'s Average Stats: Points: ${result[0].p}, Kills: ${result[0].k}, Assists: ${result[0].a}, Rating: ${result[0].r}`,
+          ephemeral: true,
+        });
+      });
+    }
+
+    /* /postgame logic */
+    else if (commandName === "postgame") {
       pointsScored = interaction.options.getString("points-scored");
       kills = interaction.options.getString("kills");
       assists = interaction.options.getString("assists");
       rating = interaction.options.getString("rating");
 
-      const doc = {
-        player: slashCommandUser,
-        pointsScored: pointsScored,
-        kills: kills,
-        assists: assists,
-        rating: rating,
-      };
+      var sql_use = 'USE unite';
+      con.query(sql_use, function (err, result) {
+        if (err) throw err;
+        console.log("using unite db");
+      });
 
-      addEntry(UniteDatabase, statsCollection, doc);
+      var sql_insert = `INSERT INTO stats (id, points, kills, assists, rating) VALUES ('${slashCommandUser}', ${pointsScored}, ${kills}, ${assists}, ${rating})`;
+      con.query(sql_insert, function (err, result) {
+        if (err) throw err;
+        console.log("/postgame record successfully inserted!");
+      });
 
       await interaction.reply({
         content: `Game Summary: Points Scored: ${pointsScored}, Kills: ${kills}, Assists: ${assists}, Rating: ${rating}`,
         ephemeral: true,
       });
-    } else if (commandName === "pregame") {
-      // match type selection
+    } 
+
+    /* /pregame logic */
+    else if (commandName === "pregame") {
       const matchTypeRow = new MessageActionRow().addComponents(
         new MessageSelectMenu()
           .setCustomId("matchType")
@@ -142,7 +146,10 @@ client.on("interactionCreate", async (interaction) => {
         ephemeral: true,
       });
     }
-  } else if (interaction.isSelectMenu()) {
+  } 
+  
+  else if (interaction.isSelectMenu()) {
+    /* entered match type --> prompt for path */
     if (interaction.customId === "matchType") {
       chosenMatchType = interaction.values[0];
       // path selection
@@ -166,7 +173,10 @@ client.on("interactionCreate", async (interaction) => {
           ]),
       );
       await interaction.update({ components: [pathRow] });
-    } else if (interaction.customId === "path") {
+    } 
+    
+    /* entered path --> prompt for pokémon role */
+    else if (interaction.customId === "path") {
       chosenPath = interaction.values[0];
       // Pokémon selection
       const pokémonRoleRow = new MessageActionRow().addComponents(
@@ -197,7 +207,10 @@ client.on("interactionCreate", async (interaction) => {
           ]),
       );
       await interaction.update({ components: [pokémonRoleRow] });
-    } else if (interaction.customId === "pokémon-role") {
+    } 
+    
+    /* entered pokémon role --> prompt for pokémon choice */
+    else if (interaction.customId === "pokémon-role") {
       if (interaction.values[0] === "all-rounder") {
         const allRounderRow = new MessageActionRow().addComponents(
           new MessageSelectMenu()
@@ -229,7 +242,9 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.update({
           components: [allRounderRow],
         });
-      } else if (interaction.values[0] === "attacker") {
+      } 
+      
+      else if (interaction.values[0] === "attacker") {
         const attackerRow = new MessageActionRow().addComponents(
           new MessageSelectMenu()
             .setCustomId("attacker-pokémon")
@@ -285,7 +300,9 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.update({
           components: [attackerRow],
         });
-      } else if (interaction.values[0] === "defender") {
+      } 
+      
+      else if (interaction.values[0] === "defender") {
         const defenderRow = new MessageActionRow().addComponents(
           new MessageSelectMenu()
             .setCustomId("defender-pokémon")
@@ -326,7 +343,9 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.update({
           components: [defenderRow],
         });
-      } else if (interaction.values[0] === "speedster") {
+      } 
+      
+      else if (interaction.values[0] === "speedster") {
         const speedsterRow = new MessageActionRow().addComponents(
           new MessageSelectMenu()
             .setCustomId("speedster-pokémon")
@@ -357,7 +376,9 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.update({
           components: [speedsterRow],
         });
-      } else if (interaction.values[0] === "supporter") {
+      } 
+      
+      else if (interaction.values[0] === "supporter") {
         const supporterRow = new MessageActionRow().addComponents(
           new MessageSelectMenu()
             .setCustomId("supporter-pokémon")
@@ -389,7 +410,10 @@ client.on("interactionCreate", async (interaction) => {
           components: [supporterRow],
         });
       }
-    } else if (
+    } 
+    
+    /* entered pokémon choice --> output /pregame result */
+    else if (
       interaction.customId === "all-rounder-pokémon" ||
       interaction.customId === "attacker-pokémon" ||
       interaction.customId === "defender-pokémon" ||
@@ -405,6 +429,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
+// NOTE: this should be last 
 client.login(botToken);
 
 module.exports = {
