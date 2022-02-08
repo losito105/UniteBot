@@ -5,6 +5,7 @@ const {
   MessageActionRow,
   MessageSelectMenu,
   Message,
+  MessageButton,
   MessageAttachment,
 } = require("discord.js");
 
@@ -49,8 +50,33 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
     const { commandName } = interaction;
 
+    /* scoreboard logic */
+    if(commandName === "score") {
+      const row = new MessageActionRow()
+      .addComponents(
+        new MessageButton()
+          .setCustomId('team')
+          .setLabel('TEAM')
+          .setStyle('PRIMARY'),
+
+        new MessageButton()
+          .setCustomId('enemy')
+          .setLabel('ENEMY')
+          .setStyle('SECONDARY'),
+
+        new MessageButton()
+          .setCustomId('exit')
+          .setLabel('EXIT')
+          .setStyle('DANGER'),
+      );
+
+      await interaction.reply({ 
+        content: " |----------***SCOREBOARD***----------|\n|-------|                                    |-------|\n|-------|                                    |-------|\n|-------|                                    |-------|\n|-------|                                    |-------|\n|-------|                                    |-------|\n|-------|                                    |-------|\n",
+        components: [row] });
+    }
+
     /* /shiny logic */
-    if (commandName === "shiny") {
+    else if (commandName === "shiny") {
       // get photos from pokeapi
       const axios = require('axios');
 
