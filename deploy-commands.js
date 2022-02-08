@@ -12,10 +12,6 @@ const commands = [
     .addStringOption((option) =>
       option.setName("username").setDescription("username").setRequired(true),
     ),
-  
-  new SlashCommandBuilder()
-    .setName("melody")
-    .setDescription("Generates a random melody!"),
 
   new SlashCommandBuilder()
     .setName("pregame")

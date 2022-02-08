@@ -49,15 +49,8 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
     const { commandName } = interaction;
 
-    /* /melody logic */
-    if (commandName === "melody") {
-      const scribble = require('scribbletune');
-      // TODO: generate melodies
-    }
-
-
     /* /shiny logic */
-    else if (commandName === "shiny") {
+    if (commandName === "shiny") {
       // get photos from pokeapi
       const axios = require('axios');
 
