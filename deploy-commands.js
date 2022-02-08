@@ -17,11 +17,6 @@ const commands = [
     .setName("pregame")
     .setDescription("Requests pregame info!"
     ),
-
-  new SlashCommandBuilder()
-    .setName("score")
-    .setDescription("In game scoreboard ... because Unite doesn't have one!"
-    ),
   
   new SlashCommandBuilder()
     .setName("shiny")
