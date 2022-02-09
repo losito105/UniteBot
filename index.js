@@ -50,8 +50,20 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
     const { commandName } = interaction;
 
+    /* translate logic */
+    if(commandName === "translate") {
+      const translate = require("@iamtraction/google-translate");
+
+      const lang = interaction.options.getString("lang");
+      const message = interaction.options.getString("message");
+
+      const translated = await translate(message, {to: lang})
+      
+      await interaction.reply({content: translated.text, ephemeral: false})
+    }
+
     /* /shiny logic */
-    if (commandName === "shiny") {
+    else if (commandName === "shiny") {
       // get photos from pokeapi
       const axios = require('axios');
 

@@ -17,6 +17,16 @@ const commands = [
     .setName("pregame")
     .setDescription("Requests pregame info!"
     ),
+
+  new SlashCommandBuilder()
+    .setName("translate")
+    .setDescription("Translate your messages into another language!")
+    .addStringOption((option) =>
+      option.setName("lang").setDescription("lang").setRequired(true),
+    )
+    .addStringOption((option) =>
+      option.setName("message").setDescription("message").setRequired(true),
+    ),
   
   new SlashCommandBuilder()
     .setName("shiny")
