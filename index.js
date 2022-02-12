@@ -49,9 +49,11 @@ client.on("interactionCreate", async (interaction) => {
 
   if (interaction.isCommand()) {
     const { commandName } = interaction;
-
+    if (commandName === "helloworld") {
+      await interaction.reply({content: "Hello World!"})
+    }
     /* translate logic */
-    if(commandName === "translate") {
+    else if(commandName === "translate") {
       const translate = require("@iamtraction/google-translate");
 
       const lang = interaction.options.getString("lang");
