@@ -4,8 +4,6 @@ const {
   Intents,
   MessageActionRow,
   MessageSelectMenu,
-  Message,
-  MessageButton,
   MessageAttachment,
 } = require("discord.js");
 
@@ -13,10 +11,9 @@ const { con } = require('./database');
 const https = require('https');
 
 // bot info
-// TODO: move to .env
-const botToken = "OTE0NTc4MzIxOTgxOTY0Mzgw.YaPFcA.rkUE1bS6NEQ8vQ7pGFQg5s8fuIo";
-const clientID = "914578321981964380";
-const generalChannelID = "913977196153016391/913977196153016394";
+const botToken = process.env.BOT_TOKEN;
+const clientID = process.env.CLIENT_ID;
+const generalChannelID = process.env.GENERAL_CHANNEL_ID;
 
 // /pregame vars
 var slashCommandUser = "";
@@ -49,11 +46,8 @@ client.on("interactionCreate", async (interaction) => {
 
   if (interaction.isCommand()) {
     const { commandName } = interaction;
-    if (commandName === "helloworld") {
-      await interaction.reply({content: "Hello World!"})
-    }
     /* translate logic */
-    else if(commandName === "translate") {
+    if (commandName === "translate") {
       const translate = require("@iamtraction/google-translate");
 
       const lang = interaction.options.getString("lang");

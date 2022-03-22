@@ -55,10 +55,6 @@ const commands = [
     .addStringOption((option) =>
       option.setName("rating").setDescription("Rating").setRequired(true),
     ),
-
-    new SlashCommandBuilder()
-      .setName("helloworld")
-      .setDescription("just a test command"),
   // NOTE: additional slash commands can be added here
 ].map((command) => command.toJSON());
 
